@@ -2,7 +2,7 @@ import uuid
 from django.db import models
 from django.utils import timezone
 from django.core.cache import cache
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Count, Sum, Avg, Max, Min  # Added missing imports
 from typing import Optional, Dict, Any, List, Union
 import logging
 
@@ -90,21 +90,17 @@ class OptimizedManager(models.Manager):
                 created_count += len(to_create)
 
             if to_update:
-                self.bulk_update(to_update,
-                               [field for field in obj_data.keys() if field not in unique_fields],
-                               batch_size=batch_size)
-                updated_count += len(to_update)
+                # Get all fields except unique fields for bulk_update
+                update_fields = []
+                if batch:
+                    update_fields = [field for field in batch[0].keys() if field not in unique_fields]
+
+                if update_fields and to_update:
+                    self.bulk_update(to_update, update_fields, batch_size=batch_size)
+                    updated_count += len(to_update)
 
         logger.info(f"Bulk operation completed: {created_count} created, {updated_count} updated")
         return {'created': created_count, 'updated': updated_count}
-
-    def with_prefetch(self, *prefetch_fields) -> QuerySet:
-        """Add prefetch_related for better performance"""
-        return self.get_queryset().prefetch_related(*prefetch_fields)
-
-    def with_select(self, *select_fields) -> QuerySet:
-        """Add select_related for better performance"""
-        return self.get_queryset().select_related(*select_fields)
 
 
 class BaseModel(models.Model):
@@ -206,271 +202,6 @@ class TimestampedModel(BaseModel):
     def last_modified(self) -> timezone.timedelta:
         """Get time since last modification"""
         return timezone.now() - self.updated_at
-
-
-class SoftDeleteManager(OptimizedManager):
-    """Manager that excludes soft-deleted objects by default"""
-
-    def get_queryset(self) -> QuerySet:
-        return super().get_queryset().filter(deleted_at__isnull=True)
-
-    def with_deleted(self) -> QuerySet:
-        """Include soft-deleted objects"""
-        return super().get_queryset()
-
-    def deleted_only(self) -> QuerySet:
-        """Get only soft-deleted objects"""
-        return super().get_queryset().filter(deleted_at__isnull=False)
-
-
-class SoftDeleteModel(TimestampedModel):
-    """
-    Abstract model with soft delete functionality
-    Objects are marked as deleted instead of being removed
-    """
-
-    class Meta:
-        abstract = True
-
-    deleted_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        db_index=True,
-        help_text="When this record was soft deleted"
-    )
-
-    objects = SoftDeleteManager()
-    all_objects = OptimizedManager()  # Manager that includes deleted objects
-
-    def delete(self, soft: bool = True, *args, **kwargs):
-        """
-        Delete object (soft delete by default)
-        Set soft=False for hard delete
-        """
-        if soft:
-            self.deleted_at = timezone.now()
-            self.save(update_fields=['deleted_at'])
-        else:
-            super().delete(*args, **kwargs)
-
-    def restore(self):
-        """Restore soft-deleted object"""
-        self.deleted_at = None
-        self.save(update_fields=['deleted_at'])
-
-    @property
-    def is_deleted(self) -> bool:
-        """Check if object is soft deleted"""
-        return self.deleted_at is not None
-
-
-class AuditModel(TimestampedModel):
-    """
-    Abstract model with audit trail functionality
-    Tracks who created and modified records
-    """
-
-    class Meta:
-        abstract = True
-
-    created_by = models.ForeignKey(
-        'auth.User',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='%(class)s_created',
-        help_text="User who created this record"
-    )
-    updated_by = models.ForeignKey(
-        'auth.User',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='%(class)s_updated',
-        help_text="User who last updated this record"
-    )
-
-    def save(self, *args, **kwargs):
-        """Override save to track user changes"""
-        user = kwargs.pop('user', None)
-
-        if user and hasattr(user, 'id'):
-            if not self.created_at:  # New object
-                self.created_by = user
-            self.updated_by = user
-
-        super().save(*args, **kwargs)
-
-
-class CachedModel(TimestampedModel):
-    """
-    Abstract model with built-in caching support
-    Automatically manages cache invalidation
-    """
-
-    class Meta:
-        abstract = True
-
-    CACHE_TIMEOUT = 3600  # 1 hour default
-
-    @classmethod
-    def get_cache_key(cls, identifier: Union[str, int]) -> str:
-        """Generate cache key for model instance"""
-        return f"{cls.__name__.lower()}:{identifier}"
-
-    @classmethod
-    def cached_get(cls, identifier: Union[str, int],
-                  field_name: str = 'id') -> Optional['CachedModel']:
-        """Get object with caching"""
-        cache_key = cls.get_cache_key(identifier)
-        obj = cache.get(cache_key)
-
-        if obj is None:
-            try:
-                obj = cls.objects.get(**{field_name: identifier})
-                cache.set(cache_key, obj, cls.CACHE_TIMEOUT)
-            except cls.DoesNotExist:
-                return None
-
-        return obj
-
-    def save(self, *args, **kwargs):
-        """Override save to invalidate cache"""
-        super().save(*args, **kwargs)
-        self.invalidate_cache()
-
-    def delete(self, *args, **kwargs):
-        """Override delete to invalidate cache"""
-        self.invalidate_cache()
-        super().delete(*args, **kwargs)
-
-    def invalidate_cache(self):
-        """Invalidate cache for this object"""
-        cache_key = self.get_cache_key(self.id)
-        cache.delete(cache_key)
-
-        # Also invalidate any related caches
-        self._invalidate_related_caches()
-
-    def _invalidate_related_caches(self):
-        """Override in subclasses to invalidate related caches"""
-        pass
-
-
-class VersionedModel(TimestampedModel):
-    """
-    Abstract model with version tracking
-    Useful for tracking changes over time
-    """
-
-    class Meta:
-        abstract = True
-
-    version = models.PositiveIntegerField(
-        default=1,
-        help_text="Version number of this record"
-    )
-    version_comment = models.TextField(
-        blank=True,
-        help_text="Comment about this version"
-    )
-
-    def save(self, *args, **kwargs):
-        """Override save to increment version"""
-        if self.pk and hasattr(self, '_original_updated_at'):
-            # Only increment version if this is an update to existing object
-            if self.updated_at != self._original_updated_at:
-                self.version += 1
-
-        super().save(*args, **kwargs)
-
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        """Store original values for version tracking"""
-        instance = super().from_db(db, field_names, values)
-        instance._original_updated_at = instance.updated_at
-        return instance
-
-
-class ConfigurationModel(BaseModel):
-    """
-    Abstract model for configuration/settings
-    Provides key-value storage with typing
-    """
-
-    class Meta:
-        abstract = True
-
-    key = models.CharField(
-        max_length=100,
-        unique=True,
-        db_index=True,
-        help_text="Configuration key"
-    )
-    value = models.TextField(help_text="Configuration value")
-    value_type = models.CharField(
-        max_length=20,
-        choices=[
-            ('str', 'String'),
-            ('int', 'Integer'),
-            ('float', 'Float'),
-            ('bool', 'Boolean'),
-            ('json', 'JSON'),
-            ('list', 'List'),
-        ],
-        default='str',
-        help_text="Type of the value"
-    )
-    description = models.TextField(
-        blank=True,
-        help_text="Description of this configuration"
-    )
-    is_active = models.BooleanField(
-        default=True,
-        db_index=True,
-        help_text="Whether this configuration is active"
-    )
-
-    def get_typed_value(self) -> Any:
-        """Get value converted to proper type"""
-        if self.value_type == 'int':
-            return int(self.value)
-        elif self.value_type == 'float':
-            return float(self.value)
-        elif self.value_type == 'bool':
-            return self.value.lower() in ('true', '1', 'yes', 'on')
-        elif self.value_type == 'json':
-            import json
-            return json.loads(self.value)
-        elif self.value_type == 'list':
-            return [item.strip() for item in self.value.split(',')]
-        else:
-            return self.value
-
-    def set_typed_value(self, value: Any):
-        """Set value with automatic type detection"""
-        if isinstance(value, bool):
-            self.value = str(value).lower()
-            self.value_type = 'bool'
-        elif isinstance(value, int):
-            self.value = str(value)
-            self.value_type = 'int'
-        elif isinstance(value, float):
-            self.value = str(value)
-            self.value_type = 'float'
-        elif isinstance(value, (list, tuple)):
-            self.value = ','.join(str(item) for item in value)
-            self.value_type = 'list'
-        elif isinstance(value, dict):
-            import json
-            self.value = json.dumps(value)
-            self.value_type = 'json'
-        else:
-            self.value = str(value)
-            self.value_type = 'str'
-
-    def __str__(self) -> str:
-        return f"{self.key}: {self.value}"
 
 
 # Utility functions for common model operations
