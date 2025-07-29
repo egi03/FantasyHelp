@@ -25,13 +25,13 @@ class TeamAdmin(BaseModelAdmin):
 
     list_display = [
         'name', 'short_name', 'code', 'position', 'strength_display',
-        'player_count', 'total_value', 'created_at'
+        'player_count', 'total_value'
     ]
     list_filter = [
         'position', 'strength', 'strength_overall_home', 'strength_overall_away'
     ]
     search_fields = ['name', 'short_name']
-    readonly_fields = ['fpl_id', 'code', 'created_at', 'updated_at']
+    readonly_fields = ['fpl_id', 'code']
     ordering = ['position', 'name']
 
     fieldsets = (
@@ -48,7 +48,7 @@ class TeamAdmin(BaseModelAdmin):
             'classes': ['collapse']
         }),
         ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
+            'fields': (),
             'classes': ['collapse']
         }),
     )
@@ -135,6 +135,7 @@ class PositionAdmin(ReadOnlyAdminMixin, BaseModelAdmin):
         'singular_name', 'singular_name_short', 'plural_name',
         'squad_select', 'squad_min_play', 'squad_max_play', 'player_count'
     ]
+    readonly_fields = ['id']  # Position model only has id field, no created_at/updated_at
     ordering = ['id']
 
     def get_queryset(self, request):
@@ -644,4 +645,6 @@ def get_admin_urls():
     ]
     return urls
 
-admin.site.get_urls = lambda: get_admin_urls() + admin.site.get_urls()
+# Store the original get_urls method to avoid recursion
+_original_get_urls = admin.site.get_urls
+admin.site.get_urls = lambda: get_admin_urls() + _original_get_urls()

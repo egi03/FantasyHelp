@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPL Transfer Suggestions</title>
+    <meta name="description" content="AI-powered Fantasy Premier League transfer suggestions and team analysis">
+    <meta name="keywords" content="FPL, Fantasy Premier League, transfers, suggestions, football, soccer">
+    <meta name="author" content="FPL Transfer Suggestions">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#3d195b">
+    <meta name="msapplication-TileColor" content="#3d195b">
+    <meta name="msapplication-config" content="browserconfig.xml">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="assets/icons/safari-pinned-tab.svg" color="#3d195b">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="FPL Transfer Suggestions">
+    <meta property="og:description" content="AI-powered Fantasy Premier League transfer suggestions and team analysis">
+    <meta property="og:image" content="assets/og-image.png">
+    <meta property="og:url" content="https://fpl-suggestions.com">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FPL Transfer Suggestions">
+    <meta name="twitter:description" content="AI-powered Fantasy Premier League transfer suggestions and team analysis">
+    <meta name="twitter:image" content="assets/twitter-card.png">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="js/api.js" as="script">
+    <link rel="preload" href="js/components.js" as="script">
+    <link rel="preload" href="js/app.js" as="script">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1><span class="logo-fpl">FPL</span> Transfer Suggestions</h1>
+                </div>
+                <nav class="nav">
+                    <a href="#dashboard" class="nav-link active" data-page="dashboard">Dashboard</a>
+                    <a href="#players" class="nav-link" data-page="players">Players</a>
+                    <a href="#suggestions" class="nav-link" data-page="suggestions">Suggestions</a>
+                    <a href="#analytics" class="nav-link" data-page="analytics">Analytics</a>
+                </nav>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="refreshDataBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                        </svg>
+                        Sync Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page active">
+                <div class="page-header">
+                    <h2 class="page-title">Dashboard</h2>
+                    <p class="page-subtitle">Your FPL team overview and quick actions</p>
+                </div>
+
+                <!-- Team Load Section -->
+                <div class="card team-load-card" id="teamLoadSection">
+                    <div class="card-header">
+                        <h3>Load Your FPL Team</h3>
+                        <p>Enter your FPL team ID to get started with transfer suggestions</p>
+                    </div>
+                    <div class="card-content">
+                        <form id="teamLoadForm" class="team-load-form">
+                            <div class="form-group">
+                                <label for="teamId">FPL Team ID</label>
+                                <input type="number" id="teamId" name="teamId" placeholder="Enter your FPL team ID" required>
+                                <small class="form-help">Find your team ID in the FPL website URL when viewing your team</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Load Team
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Team Overview -->
+                <div class="team-overview" id="teamOverview" style="display: none;">
+                    <div class="team-header">
+                        <div class="team-info">
+                            <h3 id="teamName" class="team-name">-</h3>
+                            <p id="managerName" class="manager-name">-</p>
+                        </div>
+                        <div class="team-stats">
+                            <div class="stat">
+                                <span class="stat-value" id="totalPoints">-</span>
+                                <span class="stat-label">Points</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="teamValue">£-</span>
+                                <span class="stat-label">Team Value</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="bankBalance">£-</span>
+                                <span class="stat-label">Bank</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="freeTransfers">-</span>
+                                <span class="stat-label">Free Transfers</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formation -->
+                    <div class="formation-container">
+                        <div class="formation" id="formation">
+                            <div class="formation-line goalkeeper">
+                                <div class="position-players" data-position="1"></div>
+                            </div>
+                            <div class="formation-line defenders">
+                                <div class="position-players" data-position="2"></div>
+                            </div>
+                            <div class="formation-line midfielders">
+                                <div class="position-players" data-position="3"></div>
+                            </div>
+                            <div class="formation-line forwards">
+                                <div class="position-players" data-position="4"></div>
+                            </div>
+                        </div>
+                        <div class="bench" id="bench">
+                            <h4>Bench</h4>
+                            <div class="bench-players"></div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <button class="btn btn-primary" id="generateSuggestionsBtn">
+                            Generate Suggestions
+                        </button>
+                        <button class="btn btn-secondary" id="analyzeTeamBtn">
+                            Analyze Team
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Players Page -->
+            <div id="players" class="page">
+                <div class="page-header">
+                    <h2 class="page-title">Players</h2>
+                    <p class="page-subtitle">Search and compare FPL players</p>
+                </div>
+
+                <!-- Player Filters -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Player Search</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label for="positionFilter">Position</label>
+                                <select id="positionFilter">
+                                    <option value="">All Positions</option>
+                                    <option value="1">Goalkeeper</option>
+                                    <option value="2">Defender</option>
+                                    <option value="3">Midfielder</option>
+                                    <option value="4">Forward</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="teamFilter">Team</label>
+                                <select id="teamFilter">
+                                    <option value="">All Teams</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="priceMinFilter">Min Price</label>
+                                <input type="number" id="priceMinFilter" step="0.1" placeholder="4.0">
+                            </div>
+                            <div class="filter-group">
+                                <label for="priceMaxFilter">Max Price</label>
+                                <input type="number" id="priceMaxFilter" step="0.1" placeholder="15.0">
+                            </div>
+                            <div class="filter-group">
+                                <label for="searchQuery">Search</label>
+                                <input type="text" id="searchQuery" placeholder="Player name...">
+                            </div>
+                            <button class="btn btn-primary" id="searchPlayersBtn">Search</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Players Results -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Search Results</h3>
+                        <span id="playerCount" class="result-count">0 players</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="players-grid" id="playersGrid">
+                            <div class="no-results">
+                                <p>Use the search filters above to find players</p>
+                            </div>
+                        </div>
+                        <div class="pagination" id="playersPagination" style="display: none;">
+                            <button id="prevPage" class="btn btn-secondary">Previous</button>
+                            <span id="pageInfo">Page 1 of 1</span>
+                            <button id="nextPage" class="btn btn-secondary">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggestions Page -->
+            <div id="suggestions" class="page">
+                <div class="page-header">
+                    <h2 class="page-title">Transfer Suggestions</h2>
+                    <p class="page-subtitle">AI-powered transfer recommendations for your team</p>
+                </div>
+
+                <div class="suggestions-container" id="suggestionsContainer">
+                    <div class="no-team-message">
+                        <h3>No Team Loaded</h3>
+                        <p>Please load your FPL team from the Dashboard to see transfer suggestions.</p>
+                        <button class="btn btn-primary" data-page="dashboard">Go to Dashboard</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div id="analytics" class="page">
+                <div class="page-header">
+                    <h2 class="page-title">Analytics</h2>
+                    <p class="page-subtitle">Player and team performance insights</p>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Top Performers</h3>
+                        </div>
+                        <div class="card-content">
+                            <div id="topPerformers">Loading...</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Best Value Players</h3>
+                        </div>
+                        <div class="card-content">
+                            <div id="bestValue">Loading...</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Position Analysis</h3>
+                        </div>
+                        <div class="card-content">
+                            <div id="positionAnalysis">Loading...</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Form Guide</h3>
+                        </div>
+                        <div class="card-content">
+                            <div id="formGuide">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p id="loadingText">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

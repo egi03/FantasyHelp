@@ -12,10 +12,18 @@ class BaseModelAdmin(admin.ModelAdmin):
 
     list_per_page = 25
     list_max_show_all = 200
-    date_hierarchy = 'created_at'
 
     # Common fields that most models have
     readonly_fields = ['id', 'created_at', 'updated_at']
+
+    def __init__(self, model, admin_site):
+        super().__init__(model, admin_site)
+        # Set date_hierarchy only if the model has created_at field
+        model_fields = [f.name for f in model._meta.fields]
+        if 'created_at' in model_fields:
+            self.date_hierarchy = 'created_at'
+        else:
+            self.date_hierarchy = None
 
     def get_readonly_fields(self, request, obj=None):
         """Return readonly fields, handling cases where they might not exist"""

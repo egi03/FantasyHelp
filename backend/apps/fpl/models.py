@@ -6,8 +6,7 @@ from decimal import Decimal
 import uuid
 from typing import Optional, Dict, Any, List
 
-from apps.core.models import BaseModel, TimestampedModel
-from apps.core.managers import OptimizedManager
+from apps.core.models import BaseModel, TimestampedModel, OptimizedManager
 
 
 class Team(BaseModel):

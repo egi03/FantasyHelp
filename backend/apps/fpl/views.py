@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework as filters
 from django.core.cache import cache
 from django.db.models import Q, Count, Avg, Max, Min, F
 from django.db import transaction
