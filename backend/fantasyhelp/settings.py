@@ -10,51 +10,77 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
+import sys
 from pathlib import Path
+from decouple import config, Csv
+from datetime import timedelta
+import structlog
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-^tb6qr5iijrt3cr7eim1=qq&an-g#8ad@42ji9i&6um*c(rnu4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 # Application definition
-
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 ]
+
+THIRD_PARTY_APPS = [
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'django_filters',
+    'drf_spectacular',
+    'health_check',
+    'health_check.db',
+    'health_check.cache',
+    'health_check.storage',
+]
+
+LOCAL_APPS = [
+    'apps.core',
+    'apps.fpl',
+    'apps.users',
+    'apps.analytics',
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.core.middleware.RequestLoggingMiddleware',
+    'apps.core.middleware.RateLimitMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.core.middleware.ExceptionHandlingMiddleware',
 ]
 
-ROOT_URLCONF = 'fantasyhelp.urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -67,29 +93,71 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'fantasyhelp.wsgi.application'
-
+WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='fpl_suggestions'),
+        'USER': config('DB_USER', default='postgres'),
+        'PASSWORD': config('DB_PASSWORD', default='password'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
+        'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=60, cast=int),
+        'OPTIONS': {
+            'MAX_CONNS': config('DB_MAX_CONNS', default=20, cast=int),
+        }
     }
 }
 
+# Cache Configuration
+REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': config('REDIS_MAX_CONNECTIONS', default=50, cast=int),
+                'retry_on_timeout': True,
+            },
+            'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+        },
+        'KEY_PREFIX': 'fpl_api',
+        'TIMEOUT': config('CACHE_TIMEOUT', default=300, cast=int),  # 5 minutes
+    }
+}
+
+# Celery Configuration
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default=REDIS_URL)
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default=REDIS_URL)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_ROUTES = {
+    'apps.fpl.tasks.update_player_data': {'queue': 'data_updates'},
+    'apps.fpl.tasks.generate_transfer_suggestions': {'queue': 'suggestions'},
+    'apps.analytics.tasks.*': {'queue': 'analytics'},
+}
+CELERY_TASK_ANNOTATIONS = {
+    '*': {'rate_limit': '100/m'},
+    'apps.fpl.tasks.update_player_data': {'rate_limit': '10/m'},
+}
 
 # Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 12}
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -99,25 +167,218 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
-STATIC_URL = 'static/'
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Site ID for django.contrib.sites
+SITE_ID = 1
+
+# Django REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'apps.core.pagination.StandardResultsSetPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour'
+    },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'EXCEPTION_HANDLER': 'apps.core.exceptions.custom_exception_handler',
+}
+
+# JWT Configuration
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': 'fpl-suggestions-api',
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+}
+
+# API Documentation
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'FPL Transfer Suggestions API',
+    'DESCRIPTION': 'Enterprise-grade API for Fantasy Premier League transfer suggestions',
+    'VERSION': '2.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': '/api/v[0-9]',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SORT_OPERATIONS': False,
+}
+
+# CORS Settings
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000', cast=Csv())
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only in development
+
+# Security Settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Session Configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 86400  # 24 hours
+
+# CSRF Protection
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'json': {
+            '()': structlog.stdlib.ProcessorFormatter,
+            'processor': structlog.dev.ConsoleRenderer(colors=False),
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'json',
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'logs/django.log',
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'level': 'INFO',
+        'handlers': ['console'],
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Custom Application Settings
+FPL_API_SETTINGS = {
+    'BASE_URL': 'https://fantasy.premierleague.com/api',
+    'RATE_LIMIT': config('FPL_API_RATE_LIMIT', default=100, cast=int),  # requests per hour
+    'TIMEOUT': config('FPL_API_TIMEOUT', default=30, cast=int),  # seconds
+    'RETRY_ATTEMPTS': config('FPL_API_RETRY_ATTEMPTS', default=3, cast=int),
+    'CACHE_TTL': config('FPL_API_CACHE_TTL', default=300, cast=int),  # 5 minutes
+}
+
+# Data Update Settings
+DATA_UPDATE_SETTINGS = {
+    'PLAYER_UPDATE_INTERVAL': config('PLAYER_UPDATE_INTERVAL', default=3600, cast=int),  # 1 hour
+    'BATCH_SIZE': config('DATA_BATCH_SIZE', default=100, cast=int),
+    'MAX_CONCURRENT_UPDATES': config('MAX_CONCURRENT_UPDATES', default=5, cast=int),
+}
+
+# Analytics Settings
+ANALYTICS_SETTINGS = {
+    'TRACK_USER_ACTIONS': config('TRACK_USER_ACTIONS', default=True, cast=bool),
+    'RETENTION_DAYS': config('ANALYTICS_RETENTION_DAYS', default=90, cast=int),
+    'BATCH_SIZE': config('ANALYTICS_BATCH_SIZE', default=1000, cast=int),
+}
+
+# Health Check Settings
+HEALTH_CHECK = {
+    'DISK_USAGE_MAX': 90,  # percent
+    'MEMORY_MIN': 100,     # MB
+}
+
+# Email Configuration (for notifications)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@fpl-suggestions.com')
+
+# Rate Limiting
+RATELIMIT_ENABLE = True
+RATELIMIT_USE_CACHE = 'default'
+
+# File Upload Settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+FILE_UPLOAD_PERMISSIONS = 0o644
+
+# Testing
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:'
+    }
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
