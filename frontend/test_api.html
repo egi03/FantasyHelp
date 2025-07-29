@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/v2/teams/');
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                const text = await response.text();
+                console.log('Response text:', text);
+                
+                try {
+                    const data = JSON.parse(text);
+                    resultDiv.innerHTML = `
+                        <h3>Success!</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } catch (parseError) {
+                    resultDiv.innerHTML = `
+                        <h3>Response is not JSON:</h3>
+                        <pre>${text.substring(0, 500)}...</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Network Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
