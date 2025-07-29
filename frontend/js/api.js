@@ -1,6 +1,6 @@
 // API Configuration
 const API_CONFIG = {
-    baseURL: '/api/v2',
+    baseURL: 'http://localhost:8000/api/v2',
     timeout: 30000,
     retryAttempts: 3,
     retryDelay: 1000
@@ -13,10 +13,24 @@ class APIClient {
         this.timeout = config.timeout;
         this.retryAttempts = config.retryAttempts;
         this.retryDelay = config.retryDelay;
+
+         const isLocal = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+        
+        if (isLocal) {
+            this.baseURL = 'http://localhost:8000/api/v2';
+        } else {
+            this.baseURL = '/api/v2';
+        }
         
         // Request interceptors
         this.requestInterceptors = [];
         this.responseInterceptors = [];
+
+        this.defaultHeaders = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        };
         
         // Add default request interceptor for headers
         this.addRequestInterceptor((config) => {
