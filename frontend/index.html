@@ -1,984 +1,127 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPL Transfer Suggestions</title>
-    <meta name="description" content="AI-powered Fantasy Premier League transfer suggestions and team analysis with advanced analytics">
-    <meta name="keywords" content="FPL, Fantasy Premier League, transfers, suggestions, football, soccer, analytics">
-    <meta name="author" content="FPL Transfer Suggestions">
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Theme Colors -->
-    <meta name="theme-color" content="#6366f1">
-    <meta name="msapplication-TileColor" content="#6366f1">
-    
-    <!-- Apple Touch Icons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
-    
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="FPL Transfer Suggestions">
-    <meta property="og:description" content="AI-powered Fantasy Premier League transfer suggestions and team analysis">
-    <meta property="og:image" content="assets/og-image.png">
-    <meta property="og:url" content="https://fpl-suggestions.com">
-    <meta property="og:type" content="website">
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Chart.js for analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Preload critical resources -->
-    <link rel="preload" href="js/api.js" as="script">
-    <link rel="preload" href="js/components.js" as="script">
-    <link rel="preload" href="js/app.js" as="script">
+    <title>API Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        #result { margin-top: 20px; padding: 20px; background: #f0f0f0; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: white; padding: 10px; overflow: auto; }
+    </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <div class="logo-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M12 6v6l4 2"></path>
-                        </svg>
-                    </div>
-                    <h1><span class="logo-fpl">FPL</span> Transfer Suggestions</h1>
-                </div>
-                <nav class="nav">
-                    <a href="#dashboard" class="nav-link active" data-page="dashboard">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="14" width="7" height="7"></rect>
-                            <rect x="3" y="14" width="7" height="7"></rect>
-                        </svg>
-                        Dashboard
-                    </a>
-                    <a href="#players" class="nav-link" data-page="players">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        Players
-                    </a>
-                    <a href="#suggestions" class="nav-link" data-page="suggestions">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 12l2 2 4-4"></path>
-                            <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
-                            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
-                        </svg>
-                        Suggestions
-                    </a>
-                    <a href="#analytics" class="nav-link" data-page="analytics">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
-                        </svg>
-                        Analytics
-                    </a>
-                </nav>
-                <div class="header-actions">
-                    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
-                        <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="5"></circle>
-                            <line x1="12" y1="1" x2="12" y2="3"></line>
-                            <line x1="12" y1="21" x2="12" y2="23"></line>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                            <line x1="1" y1="12" x2="3" y2="12"></line>
-                            <line x1="21" y1="12" x2="23" y2="12"></line>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                        </svg>
-                        <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                        </svg>
-                    </button>
-                    <button class="btn btn-secondary" id="refreshDataBtn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 4 23 10 17 10"></polyline>
-                            <polyline points="1 20 1 14 7 14"></polyline>
-                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
-                        </svg>
-                        Sync Data
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main">
-        <div class="container">
-            <!-- Dashboard Page -->
-            <div id="dashboard" class="page active">
-                <div class="page-header">
-                    <h2 class="page-title">Dashboard</h2>
-                    <p class="page-subtitle">Your FPL team overview and intelligent transfer insights</p>
-                </div>
-
-                <!-- Team Load Section -->
-                <div class="card team-load-card card-glass" id="teamLoadSection">
-                    <div class="card-header">
-                        <h3>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                            Load Your FPL Team
-                        </h3>
-                        <div class="loading-indicator" id="teamLoadIndicator" style="display: none;">
-                            <div class="spinner" style="width: 20px; height: 20px;"></div>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <form id="teamLoadForm" class="team-load-form">
-                            <div class="form-group">
-                                <label for="teamId">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
-                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                        <circle cx="12" cy="7" r="4"></circle>
-                                    </svg>
-                                    FPL Team ID
-                                </label>
-                                <div class="input-group">
-                                    <input type="number" id="teamId" name="teamId" placeholder="Enter your FPL team ID" required>
-                                    <button type="button" class="btn btn-secondary btn-small" id="findTeamIdBtn" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%);">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <circle cx="11" cy="11" r="8"></circle>
-                                            <path d="M21 21l-4.35-4.35"></path>
-                                        </svg>
-                                        Find ID
-                                    </button>
-                                </div>
-                                <small class="form-help">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                                    </svg>
-                                    Find your team ID in the FPL website URL when viewing your team
-                                </small>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-large">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                Load Team
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Team Overview -->
-                <div class="team-overview" id="teamOverview" style="display: none;">
-                    <div class="team-header">
-                        <div class="team-info">
-                            <h3 id="teamName" class="team-name">-</h3>
-                            <p id="managerName" class="manager-name">-</p>
-                            <div class="team-meta" style="margin-top: 16px; display: flex; gap: 12px; align-items: center;">
-                                <span class="badge" id="overallRank" style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.875rem;">
-                                    Rank: -
-                                </span>
-                                <span class="badge" id="gameweekRank" style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.875rem;">
-                                    GW Rank: -
-                                </span>
-                            </div>
-                        </div>
-                        <div class="team-stats">
-                            <div class="stat">
-                                <span class="stat-value" id="totalPoints">-</span>
-                                <span class="stat-label">Total Points</span>
-                            </div>
-                            <div class="stat">
-                                <span class="stat-value" id="gameweekPoints">-</span>
-                                <span class="stat-label">GW Points</span>
-                            </div>
-                            <div class="stat">
-                                <span class="stat-value" id="teamValue">£-</span>
-                                <span class="stat-label">Team Value</span>
-                            </div>
-                            <div class="stat">
-                                <span class="stat-value" id="bankBalance">£-</span>
-                                <span class="stat-label">Bank</span>
-                            </div>
-                            <div class="stat">
-                                <span class="stat-value" id="freeTransfers">-</span>
-                                <span class="stat-label">Free Transfers</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Formation and Bench -->
-                    <div class="formation-container">
-                        <div class="formation" id="formation">
-                            <div class="formation-line goalkeeper">
-                                <div class="position-players" data-position="1"></div>
-                            </div>
-                            <div class="formation-line defenders">
-                                <div class="position-players" data-position="2"></div>
-                            </div>
-                            <div class="formation-line midfielders">
-                                <div class="position-players" data-position="3"></div>
-                            </div>
-                            <div class="formation-line forwards">
-                                <div class="position-players" data-position="4"></div>
-                            </div>
-                        </div>
-                        <div class="bench" id="bench">
-                            <h4>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                                </svg>
-                                Bench
-                            </h4>
-                            <div class="bench-players"></div>
-                            <div class="bench-stats" style="margin-top: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; font-size: 0.875rem;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                    <span>Bench Value:</span>
-                                    <span id="benchValue">£0.0m</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>Bench Points:</span>
-                                    <span id="benchPoints">0 pts</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Team Analysis Cards -->
-                    <div class="analytics-grid" style="margin-bottom: 32px;">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                        <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
-                                    </svg>
-                                    Performance
-                                </h3>
-                            </div>
-                            <div class="card-content">
-                                <canvas id="performanceChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <polyline points="12,6 12,12 16,14"></polyline>
-                                    </svg>
-                                    Squad Balance
-                                </h3>
-                            </div>
-                            <div class="card-content">
-                                <canvas id="squadChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="quick-actions">
-                        <button class="btn btn-primary btn-large" id="generateSuggestionsBtn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 12l2 2 4-4"></path>
-                                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
-                                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
-                            </svg>
-                            Generate Suggestions
-                        </button>
-                        <button class="btn btn-secondary btn-large" id="analyzeTeamBtn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
-                            </svg>
-                            Analyze Team
-                        </button>
-                        <button class="btn btn-secondary btn-large" id="comparePlayersBtn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 11H1l2-2 2 2"></path>
-                                <path d="M1 13h8l-2 2-2-2"></path>
-                                <path d="M15 11h8l-2-2-2 2"></path>
-                                <path d="M23 13h-8l2 2 2-2"></path>
-                            </svg>
-                            Compare Players
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Players Page -->
-            <div id="players" class="page">
-                <div class="page-header">
-                    <h2 class="page-title">Players</h2>
-                    <p class="page-subtitle">Search, compare and analyze FPL players with advanced statistics</p>
-                </div>
-
-                <!-- Enhanced Player Search -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <path d="M21 21l-4.35-4.35"></path>
-                            </svg>
-                            Player Search & Filters
-                        </h3>
-                        <div class="search-actions">
-                            <button class="btn btn-secondary btn-small" id="clearFiltersBtn">Clear All</button>
-                            <button class="btn btn-secondary btn-small" id="saveSearchBtn">Save Search</button>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <!-- Search Bar -->
-                        <div class="search-container" style="margin-bottom: 24px;">
-                            <div class="input-group">
-                                <div class="input-icon">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <path d="M21 21l-4.35-4.35"></path>
-                                    </svg>
-                                </div>
-                                <input type="text" id="searchQuery" placeholder="Search players by name, team, or position..." autocomplete="off">
-                                <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Advanced Filters -->
-                        <div class="filters">
-                            <div class="filter-group">
-                                <label for="positionFilter">Position</label>
-                                <select id="positionFilter">
-                                    <option value="">All Positions</option>
-                                    <option value="1">Goalkeeper</option>
-                                    <option value="2">Defender</option>
-                                    <option value="3">Midfielder</option>
-                                    <option value="4">Forward</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="teamFilter">Team</label>
-                                <select id="teamFilter">
-                                    <option value="">All Teams</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="priceMinFilter">Min Price (£m)</label>
-                                <input type="number" id="priceMinFilter" step="0.1" placeholder="4.0" min="3.9" max="15.0">
-                            </div>
-                            <div class="filter-group">
-                                <label for="priceMaxFilter">Max Price (£m)</label>
-                                <input type="number" id="priceMaxFilter" step="0.1" placeholder="15.0" min="3.9" max="15.0">
-                            </div>
-                            <div class="filter-group">
-                                <label for="statusFilter">Status</label>
-                                <select id="statusFilter">
-                                    <option value="">All Status</option>
-                                    <option value="a">Available</option>
-                                    <option value="d">Doubtful</option>
-                                    <option value="i">Injured</option>
-                                    <option value="s">Suspended</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="sortFilter">Sort By</label>
-                                <select id="sortFilter">
-                                    <option value="-total_points">Total Points ↓</option>
-                                    <option value="total_points">Total Points ↑</option>
-                                    <option value="-form">Form ↓</option>
-                                    <option value="form">Form ↑</option>
-                                    <option value="-points_per_game">PPG ↓</option>
-                                    <option value="points_per_game">PPG ↑</option>
-                                    <option value="current_price">Price ↑</option>
-                                    <option value="-current_price">Price ↓</option>
-                                    <option value="-selected_by_percent">Ownership ↓</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-primary" id="searchPlayersBtn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <path d="M21 21l-4.35-4.35"></path>
-                                </svg>
-                                Search Players
-                            </button>
-                        </div>
-
-                        <!-- Quick Filter Buttons -->
-                        <div class="quick-filters" style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button class="btn btn-small btn-secondary" data-filter="premium" id="premiumFilter">Premium (£9m+)</button>
-                            <button class="btn btn-small btn-secondary" data-filter="budget" id="budgetFilter">Budget (£5m-)</button>
-                            <button class="btn btn-small btn-secondary" data-filter="form" id="formFilter">In Form (4.0+)</button>
-                            <button class="btn btn-small btn-secondary" data-filter="value" id="valueFilter">Value Picks</button>
-                            <button class="btn btn-small btn-secondary" data-filter="template" id="templateFilter">Template Players</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Player Comparison Tool -->
-                <div class="card" id="comparisonCard" style="display: none;">
-                    <div class="card-header">
-                        <h3>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                <path d="M9 11H1l2-2 2 2"></path>
-                                <path d="M1 13h8l-2 2-2-2"></path>
-                                <path d="M15 11h8l-2-2-2 2"></path>
-                                <path d="M23 13h-8l2 2 2-2"></path>
-                            </svg>
-                            Player Comparison
-                        </h3>
-                        <button class="btn btn-secondary btn-small" id="clearComparisonBtn">Clear All</button>
-                    </div>
-                    <div class="card-content">
-                        <div class="comparison-players" id="comparisonPlayers">
-                            <div class="comparison-placeholder">
-                                <p>Click on players to add them to comparison (max 4)</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary" id="compareSelectedBtn" style="margin-top: 16px;" disabled>
-                            Compare Selected Players
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Players Results -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Search Results</h3>
-                        <div class="results-actions">
-                            <span id="playerCount" class="result-count">0 players</span>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-secondary btn-small" id="exportPlayersBtn">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                    Export
-                                </button>
-                                <div class="view-toggle">
-                                    <button class="btn btn-secondary btn-small" id="gridViewBtn">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <rect x="3" y="3" width="7" height="7"></rect>
-                                            <rect x="14" y="3" width="7" height="7"></rect>
-                                            <rect x="14" y="14" width="7" height="7"></rect>
-                                            <rect x="3" y="14" width="7" height="7"></rect>
-                                        </svg>
-                                    </button>
-                                    <button class="btn btn-secondary btn-small" id="listViewBtn">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <line x1="8" y1="6" x2="21" y2="6"></line>
-                                            <line x1="8" y1="12" x2="21" y2="12"></line>
-                                            <line x1="8" y1="18" x2="21" y2="18"></line>
-                                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <div class="players-grid" id="playersGrid" data-view="grid">
-                            <div class="no-results">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 16px; opacity: 0.5;">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <path d="M21 21l-4.35-4.35"></path>
-                                </svg>
-                                <h3>No Players Found</h3>
-                                <p>Use the search filters above to find players</p>
-                            </div>
-                        </div>
-                        <div class="pagination" id="playersPagination" style="display: none;">
-                            <button id="prevPage" class="btn btn-secondary">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="15,18 9,12 15,6"></polyline>
-                                </svg>
-                                Previous
-                            </button>
-                            <div class="page-numbers" id="pageNumbers"></div>
-                            <span id="pageInfo">Page 1 of 1</span>
-                            <button id="nextPage" class="btn btn-secondary">
-                                Next
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="9,18 15,12 9,6"></polyline>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Suggestions Page -->
-            <div id="suggestions" class="page">
-                <div class="page-header">
-                    <h2 class="page-title">Transfer Suggestions</h2>
-                    <p class="page-subtitle">AI-powered transfer recommendations with detailed reasoning and confidence scores</p>
-                </div>
-
-                <!-- Suggestion Filters -->
-                <div class="card" id="suggestionFilters" style="display: none;">
-                    <div class="card-header">
-                        <h3>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
-                            </svg>
-                            Filter Suggestions
-                        </h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="filters">
-                            <div class="filter-group">
-                                <label for="suggestionTypeFilter">Suggestion Type</label>
-                                <select id="suggestionTypeFilter">
-                                    <option value="">All Types</option>
-                                    <option value="upgrade">Upgrade</option>
-                                    <option value="sideways">Sideways Move</option>
-                                    <option value="downgrade">Downgrade</option>
-                                    <option value="injury">Injury Replacement</option>
-                                    <option value="rotation">Rotation Risk</option>
-                                    <option value="fixture">Fixture-based</option>
-                                    <option value="form">Form-based</option>
-                                    <option value="value">Value Play</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="confidenceFilter">Min Confidence</label>
-                                <select id="confidenceFilter">
-                                    <option value="0">All</option>
-                                    <option value="50">50%+</option>
-                                    <option value="70">70%+</option>
-                                    <option value="80">80%+</option>
-                                    <option value="90">90%+</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="positionFilterSuggestions">Position</label>
-                                <select id="positionFilterSuggestions">
-                                    <option value="">All Positions</option>
-                                    <option value="1">Goalkeeper</option>
-                                    <option value="2">Defender</option>
-                                    <option value="3">Midfielder</option>
-                                    <option value="4">Forward</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-primary" id="filterSuggestionsBtn">Apply Filters</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="suggestions-container" id="suggestionsContainer">
-                    <div class="no-team-message">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 24px; opacity: 0.5;">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        <h3>No Team Loaded</h3>
-                        <p>Please load your FPL team from the Dashboard to see transfer suggestions.</p>
-                        <button class="btn btn-primary btn-large" data-page="dashboard">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="14" width="7" height="7"></rect>
-                                <rect x="3" y="14" width="7" height="7"></rect>
-                            </svg>
-                            Go to Dashboard
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Analytics Page -->
-            <div id="analytics" class="page">
-                <div class="page-header">
-                    <h2 class="page-title">Analytics</h2>
-                    <p class="page-subtitle">Comprehensive player and league statistics with data visualizations</p>
-                </div>
-
-                <!-- Analytics Overview -->
-                <div class="analytics-overview" style="margin-bottom: 32px;">
-                    <div class="analytics-stats">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
-                            </div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="totalPlayersCount">-</span>
-                                <span class="stat-label">Total Players</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
-                                </svg>
-                            </div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="avgPoints">-</span>
-                                <span class="stat-label">Avg Points</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="12" y1="1" x2="12" y2="23"></line>
-                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                                </svg>
-                            </div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="avgPrice">-</span>
-                                <span class="stat-label">Avg Price</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-                                </svg>
-                            </div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="topFormPlayer">-</span>
-                                <span class="stat-label">Top Form</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="analytics-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-                                </svg>
-                                Top Performers
-                            </h3>
-                            <select id="topPerformersMetric" class="btn btn-secondary btn-small">
-                                <option value="total_points">Total Points</option>
-                                <option value="form">Form</option>
-                                <option value="points_per_game">PPG</option>
-                                <option value="ict_index">ICT Index</option>
-                            </select>
-                        </div>
-                        <div class="card-content">
-                            <div id="topPerformers">
-                                <div class="loading-placeholder">
-                                    <div class="spinner" style="width: 32px; height: 32px; margin: 0 auto;"></div>
-                                    <p style="margin-top: 16px; text-align: center; color: var(--text-secondary);">Loading players...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <path d="M16 8l-4 4-4-4"></path>
-                                </svg>
-                                Best Value Players
-                            </h3>
-                            <select id="valueMetric" class="btn btn-secondary btn-small">
-                                <option value="points_per_price">Points per £</option>
-                                <option value="form_per_price">Form per £</option>
-                                <option value="minutes_per_price">Minutes per £</option>
-                            </select>
-                        </div>
-                        <div class="card-content">
-                            <div id="bestValue">
-                                <div class="loading-placeholder">
-                                    <div class="spinner" style="width: 32px; height: 32px; margin: 0 auto;"></div>
-                                    <p style="margin-top: 16px; text-align: center; color: var(--text-secondary);">Loading players...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12,6 12,12 16,14"></polyline>
-                                </svg>
-                                Position Analysis
-                            </h3>
-                            <select id="positionSelect" class="btn btn-secondary btn-small">
-                                <option value="1">Goalkeepers</option>
-                                <option value="2">Defenders</option>
-                                <option value="3" selected>Midfielders</option>
-                                <option value="4">Forwards</option>
-                            </select>
-                        </div>
-                        <div class="card-content">
-                            <div id="positionAnalysis">
-                                <div class="loading-placeholder">
-                                    <div class="spinner" style="width: 32px; height: 32px; margin: 0 auto;"></div>
-                                    <p style="margin-top: 16px; text-align: center; color: var(--text-secondary);">Loading analysis...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
-                                </svg>
-                                Form Guide
-                            </h3>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-secondary btn-small" id="formPeriod5">5 GWs</button>
-                                <button class="btn btn-secondary btn-small" id="formPeriod10">10 GWs</button>
-                            </div>
-                        </div>
-                        <div class="card-content">
-                            <div id="formGuide">
-                                <div class="loading-placeholder">
-                                    <div class="spinner" style="width: 32px; height: 32px; margin: 0 auto;"></div>
-                                    <p style="margin-top: 16px; text-align: center; color: var(--text-secondary);">Loading form data...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Price Trends -->
-                    <div class="card" style="grid-column: 1 / -1;">
-                        <div class="card-header">
-                            <h3>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                                    <polyline points="17 6 23 6 23 12"></polyline>
-                                </svg>
-                                Price Trends & Ownership
-                            </h3>
-                        </div>
-                        <div class="card-content">
-                            <canvas id="priceChart" height="400"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
-        <div class="loading-spinner">
-            <div class="spinner"></div>
-            <p id="loadingText" class="loading-text">Loading...</p>
-        </div>
-    </div>
-
-    <!-- Search Suggestions Dropdown -->
-    <div class="search-suggestions" id="globalSearchSuggestions" style="display: none;">
-        <!-- Populated by JavaScript -->
-    </div>
-
-    <!-- Scripts -->
-    <script src="js/api.js"></script>
-    <script src="js/components.js"></script>
-    <script src="js/app.js"></script>
+    <h1>FPL API Connection Test</h1>
     
-    <!-- Add some inline styles for the new components -->
-    <style>
-        .analytics-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
+    <button onclick="testConnection()">Test Basic Connection</button>
+    <button onclick="testCORS()">Test CORS</button>
+    <button onclick="testAPI()">Test API Endpoints</button>
+    
+    <div id="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        const resultDiv = document.getElementById('result');
+
+        async function testConnection() {
+            resultDiv.innerHTML = '<h3>Testing basic connection...</h3>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML += `
+                    <p class="success">✓ Connection successful!</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML += `
+                    <p class="error">✗ Connection failed: ${error.message}</p>
+                    <p>Make sure Django server is running on http://localhost:8000</p>
+                `;
+            }
         }
-        
-        .stat-card {
-            background: var(--bg-card);
-            border-radius: var(--radius-xl);
-            padding: 24px;
-            border: 1px solid var(--border-primary);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transition: all var(--transition-fast);
-            box-shadow: var(--shadow-sm);
+
+        async function testCORS() {
+            resultDiv.innerHTML = '<h3>Testing CORS...</h3>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v2/health/`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML += `
+                        <p class="success">✓ CORS working!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML += `
+                        <p class="error">✗ CORS failed: ${response.status} ${response.statusText}</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML += `
+                    <p class="error">✗ CORS error: ${error.message}</p>
+                    <p>Check Django CORS settings</p>
+                `;
+            }
         }
-        
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+
+        async function testAPI() {
+            resultDiv.innerHTML = '<h3>Testing API endpoints...</h3>';
+            
+            const endpoints = [
+                '/api/v2/teams/',
+                '/api/v2/players/?page_size=5',
+                '/api/v2/health/'
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${API_BASE}${endpoint}`, {
+                        method: 'GET',
+                        mode: 'cors',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        resultDiv.innerHTML += `
+                            <p class="success">✓ ${endpoint} - OK</p>
+                        `;
+                    } else {
+                        resultDiv.innerHTML += `
+                            <p class="error">✗ ${endpoint} - ${response.status}</p>
+                        `;
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML += `
+                        <p class="error">✗ ${endpoint} - ${error.message}</p>
+                    `;
+                }
+            }
         }
-        
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--gradient-primary);
-            border-radius: var(--radius-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        
-        .stat-info {
-            flex: 1;
-        }
-        
-        .stat-info .stat-value {
-            display: block;
-            font-size: 1.875rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            line-height: 1;
-            margin-bottom: 4px;
-        }
-        
-        .stat-info .stat-label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-        
-        .search-suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--bg-card);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xl);
-            z-index: var(--z-dropdown);
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .suggestion-item-search {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border-primary);
-            cursor: pointer;
-            transition: background-color var(--transition-fast);
-        }
-        
-        .suggestion-item-search:hover {
-            background: var(--bg-hover);
-        }
-        
-        .suggestion-item-search:last-child {
-            border-bottom: none;
-        }
-        
-        .quick-filters .btn.active {
-            background: var(--primary-purple);
-            color: white;
-        }
-        
-        .loading-placeholder {
-            text-align: center;
-            padding: 32px;
-        }
-        
-        .view-toggle .btn {
-            border-radius: 0;
-        }
-        
-        .view-toggle .btn:first-child {
-            border-top-left-radius: var(--radius-lg);
-            border-bottom-left-radius: var(--radius-lg);
-        }
-        
-        .view-toggle .btn:last-child {
-            border-top-right-radius: var(--radius-lg);
-            border-bottom-right-radius: var(--radius-lg);
-            border-left: none;
-        }
-        
-        .players-grid[data-view="list"] {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        
-        .players-grid[data-view="list"] .player-item {
-            display: grid;
-            grid-template-columns: auto 1fr auto auto;
-            gap: 16px;
-            align-items: center;
-            padding: 16px 24px;
-        }
-        
-        .comparison-players {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-        
-        .comparison-player-card {
-            background: var(--bg-secondary);
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .comparison-remove {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: var(--accent-red);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .page-numbers {
-            display: flex;
-            gap: 4px;
-        }
-        
-        .page-numbers button {
-            width: 32px;
-            height: 32px;
-            border: 1px solid var(--border-primary);
-            background: var(--bg-card);
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-        
-        .page-numbers button:hover,
-        .page-numbers button.active {
-            background: var(--primary-purple);
-            color: white;
-            border-color: var(--primary-purple);
-        }
-    </style>
+
+        // Test on page load
+        window.onload = () => {
+            testConnection();
+        };
+    </script>
 </body>
 </html>

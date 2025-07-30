@@ -14,14 +14,7 @@ class APIClient {
         this.retryAttempts = config.retryAttempts;
         this.retryDelay = config.retryDelay;
 
-         const isLocal = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1';
-        
-        if (isLocal) {
-            this.baseURL = 'http://localhost:8000/api/v2';
-        } else {
-            this.baseURL = '/api/v2';
-        }
+         this.baseURL = 'http://localhost:8000/api/v2';
         
         // Request interceptors
         this.requestInterceptors = [];
@@ -54,7 +47,13 @@ class APIClient {
     async request(url, options = {}) {
         let config = {
             method: 'GET',
-            headers: {},
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...options.headers
+            },
+            mode: 'cors', // Explicitly set CORS mode
+            credentials: 'include', // Include credentials if needed
             ...options,
             url: `${this.baseURL}${url}`
         };

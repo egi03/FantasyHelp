@@ -1,43 +1,127 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>API Test</title>
+    <title>API Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        #result { margin-top: 20px; padding: 20px; background: #f0f0f0; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: white; padding: 10px; overflow: auto; }
+    </style>
 </head>
 <body>
-    <h1>API Connection Test</h1>
-    <button onclick="testAPI()">Test API</button>
+    <h1>FPL API Connection Test</h1>
+    
+    <button onclick="testConnection()">Test Basic Connection</button>
+    <button onclick="testCORS()">Test CORS</button>
+    <button onclick="testAPI()">Test API Endpoints</button>
+    
     <div id="result"></div>
 
     <script>
-        async function testAPI() {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = 'Testing...';
+        const API_BASE = 'http://localhost:8000';
+        const resultDiv = document.getElementById('result');
+
+        async function testConnection() {
+            resultDiv.innerHTML = '<h3>Testing basic connection...</h3>';
             
             try {
-                const response = await fetch('http://localhost:8000/api/v2/teams/');
+                const response = await fetch(`${API_BASE}/api/`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
                 
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
+                const data = await response.json();
+                resultDiv.innerHTML += `
+                    <p class="success">✓ Connection successful!</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML += `
+                    <p class="error">✗ Connection failed: ${error.message}</p>
+                    <p>Make sure Django server is running on http://localhost:8000</p>
+                `;
+            }
+        }
+
+        async function testCORS() {
+            resultDiv.innerHTML = '<h3>Testing CORS...</h3>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v2/health/`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
                 
-                const text = await response.text();
-                console.log('Response text:', text);
-                
-                try {
-                    const data = JSON.parse(text);
-                    resultDiv.innerHTML = `
-                        <h3>Success!</h3>
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML += `
+                        <p class="success">✓ CORS working!</p>
                         <pre>${JSON.stringify(data, null, 2)}</pre>
                     `;
-                } catch (parseError) {
-                    resultDiv.innerHTML = `
-                        <h3>Response is not JSON:</h3>
-                        <pre>${text.substring(0, 500)}...</pre>
+                } else {
+                    resultDiv.innerHTML += `
+                        <p class="error">✗ CORS failed: ${response.status} ${response.statusText}</p>
                     `;
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<p style="color: red;">Network Error: ${error.message}</p>`;
+                resultDiv.innerHTML += `
+                    <p class="error">✗ CORS error: ${error.message}</p>
+                    <p>Check Django CORS settings</p>
+                `;
             }
         }
+
+        async function testAPI() {
+            resultDiv.innerHTML = '<h3>Testing API endpoints...</h3>';
+            
+            const endpoints = [
+                '/api/v2/teams/',
+                '/api/v2/players/?page_size=5',
+                '/api/v2/health/'
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${API_BASE}${endpoint}`, {
+                        method: 'GET',
+                        mode: 'cors',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        resultDiv.innerHTML += `
+                            <p class="success">✓ ${endpoint} - OK</p>
+                        `;
+                    } else {
+                        resultDiv.innerHTML += `
+                            <p class="error">✗ ${endpoint} - ${response.status}</p>
+                        `;
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML += `
+                        <p class="error">✗ ${endpoint} - ${error.message}</p>
+                    `;
+                }
+            }
+        }
+
+        // Test on page load
+        window.onload = () => {
+            testConnection();
+        };
     </script>
 </body>
 </html>
