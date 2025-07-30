@@ -127,6 +127,9 @@ class RateLimitMiddleware(MiddlewareMixin):
 
     def process_request(self, request: HttpRequest) -> Optional[HttpResponse]:
         """Check rate limits before processing request"""
+        if settings.DEBUG:
+            return None
+        
         if not getattr(settings, 'RATELIMIT_ENABLE', True):
             return None
 

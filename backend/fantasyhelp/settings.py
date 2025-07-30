@@ -315,8 +315,22 @@ LOGGING = {
 (BASE_DIR / 'logs').mkdir(exist_ok=True)
 
 # Rate Limiting
-RATELIMIT_ENABLE = True
-RATELIMIT_USE_CACHE = 'default'
+if DEBUG:
+    # Disable rate limiting in development
+    RATELIMIT_ENABLE = False
+    RATE_LIMITS = {
+        'default': {'requests': 10000, 'window': 60},  # Very high limit for dev
+        'auth': {'requests': 10000, 'window': 60},
+        'premium': {'requests': 10000, 'window': 60},
+    }
+else:
+    # Production rate limits
+    RATELIMIT_ENABLE = True
+    RATE_LIMITS = {
+        'default': {'requests': 100, 'window': 3600},
+        'auth': {'requests': 1000, 'window': 3600},
+        'premium': {'requests': 5000, 'window': 3600},
+    }
 
 # Testing
 if 'test' in sys.argv:
